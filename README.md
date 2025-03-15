@@ -8,7 +8,7 @@ With Hitch, users can:
 ✅ **Pay instantly via the app**  
 ✅ **Choose to pay in person later**
 
-This MVP is being built by **Team MAJESTY** for the **Bluecode Hackathon**.
+This MVP has been build by **Team MAJESTY** for the **Bluecode Hackathon**.
 
 ----------
 
@@ -50,7 +50,7 @@ This MVP is being built by **Team MAJESTY** for the **Bluecode Hackathon**.
 
 1.  Browse available rides and tap **"Book Now"** on any ride (except your own).
 2.  Open the **Bluecode app** and generate a barcode:
-    -   Tap on the **blue barcode** after the app has fully generated.
+    -   Tap on the **blue barcode** after the app has fully loaded.
 3.  Enter the **barcode** in the Hitch app and click **Pay**.
 
 ### **✅ 3. Pay Later (In-Person Payment)**
