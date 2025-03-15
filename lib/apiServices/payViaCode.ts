@@ -14,6 +14,12 @@ interface CodePaymentRequest {
   barcode: string;
 }
 
+interface CodePaymentStatusRequest {
+  username: string;
+  password: string;
+  merchant_id: string;
+}
+
 interface PaymentResponse {
   result: string;
   payment: {
@@ -29,6 +35,13 @@ interface PaymentResponse {
     consumer_tip_amount: number;
     end_to_end_id: string | null;
   };
+}
+
+interface PaymentStatusResponse {
+  transaction_id: string;
+  status: string;
+  message: string;
+  [key: string]: any; // In case API returns additional fields
 }
 
 // Generate Basic Auth Token
@@ -69,7 +82,7 @@ export const payViaCode = async ({
       }
     );
 
-    console.log("my response: ", response);
+    // console.log("my response: ", response);
 
     console.log("✅ Payment Successful:", response.data);
     return response.data;
@@ -77,5 +90,57 @@ export const payViaCode = async ({
     console.error("❌ Payment Failed:", error);
     //@ts-ignore
     throw new Error(error || "Payment request failed");
+  }
+};
+
+export const getPaymentStatus = async ({
+  username,
+  password,
+  merchant_id,
+}: CodePaymentStatusRequest) => {
+  try {
+    const token = getAuthToken(username, password);
+    console.log("token: ", token);
+
+    const response = await fetch(
+      `https://merchant-api.acq.int.bluecode.ng/v4/status/?merchant_tx_id=${merchant_id}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: token,
+        },
+        body: JSON.stringify({}), // Empty body
+      }
+    );
+
+    // console.log("Response received:", response, merchant_id);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+
+    // ✅ Ensure response has a body
+    const textResponse = await response.text();
+    // console.log("Raw Response:", textResponse);
+
+    if (!textResponse) {
+      throw new Error("Empty response from server");
+    }
+
+    // ✅ Try parsing JSON safely
+    let data: PaymentStatusResponse;
+    try {
+      data = JSON.parse(textResponse);
+    } catch (err) {
+      throw new Error(`Invalid JSON response: ${textResponse}`);
+    }
+
+    console.log("✅ Payment status data:", data);
+    return data;
+  } catch (error) {
+    console.error("❌ Payment Failed:", error);
+    //@ts-ignore
+    throw new Error(error.message || "Payment request failed");
   }
 };

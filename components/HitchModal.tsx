@@ -36,7 +36,7 @@ const HitchModal = () => {
         }}
       >
         <Text style={styles.modalTitle}>{modal.title}</Text>
-        {modal.text.trim() != "" && (
+        {modal.text && modal.text.trim() != "" && (
           <Text style={styles.modalText}>{modal.text}</Text>
         )}
 

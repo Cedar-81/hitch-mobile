@@ -14,7 +14,7 @@ import { COLORS } from "@/costants/colors";
 import { AntDesign } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { payViaRedirect } from "@/lib/apiServices/payViaRequest";
-import { payViaCode } from "@/lib/apiServices/payViaCode";
+import { getPaymentStatus, payViaCode } from "@/lib/apiServices/payViaCode";
 import QRCode from "react-native-qrcode-svg";
 import QRCodeTerminal from "qrcode-terminal";
 import io from "socket.io-client";
@@ -220,16 +220,117 @@ const Payment = () => {
     );
   };
 
+  const pollPaymentStatus = async (
+    merchantTxId: string,
+    maxRetries = 12,
+    delay = 5000
+  ) => {
+    let retries = 0;
+
+    while (retries < maxRetries) {
+      try {
+        console.log(`🔄 Checking payment status... (Attempt ${retries + 1})`);
+
+        const data = await getPaymentStatus({
+          username: "MAJESTY",
+          password: "80241e69-c052-45ae-bbac-0e23eaf0990a",
+          merchant_id: merchantTxId,
+        });
+
+        console.log("💳 Payment Status Result:", data);
+
+        // ✅ Extract status based on response structure
+        let status: string | undefined;
+        let state: string | undefined;
+
+        if ("payment" in data) {
+          status = data.payment.state; // When response contains `payment`
+        } else if ("status" in data) {
+          status = data.result; // When response is `PROCESSING`
+        }
+
+        if (status === "APPROVED") {
+          console.log("✅ Payment Approved!");
+          dispatch(
+            updateModal({
+              title: "Payment Successful",
+              text: "Your payment has been approved!",
+              active: true,
+              status: ModalStatus.SUCCESS,
+            })
+          );
+          await handleCreateTicket(PaymentType.PAY_NOW, false);
+          return;
+        }
+
+        if (status === "PROCESSING" || status === "CONFIRMATION") {
+          console.log("⏳ Awaiting payment confirmation...");
+
+          if (lastModalState.current !== "CONFIRMATION") {
+            dispatch(
+              updateModal({
+                title: "Awaiting payment confirmation...",
+                text: "Your payment is being processed. Please wait...",
+                active: true,
+                status: ModalStatus.GRAY,
+              })
+            );
+            //@ts-ignore
+            lastModalState.current = "CONFIRMATION";
+          }
+        }
+
+        if (status === "FAILED") {
+          console.log("❌ Payment Failed!");
+          dispatch(
+            updateModal({
+              title: "Payment Failed",
+              text: "Your payment could not be processed.",
+              active: true,
+              status: ModalStatus.FAILURE,
+            })
+          );
+          return;
+        }
+
+        console.log("⏳ Payment still processing...");
+        retries++;
+        await new Promise((resolve) => setTimeout(resolve, delay));
+      } catch (error) {
+        console.log("⚠️ Error fetching payment status:", error);
+        dispatch(
+          updateModal({
+            title: "Payment Status Error",
+            text: "There was an issue checking your payment status.",
+            active: true,
+            status: ModalStatus.FAILURE,
+          })
+        );
+        return;
+      }
+    }
+
+    console.log("⏰ Payment polling timeout reached.");
+    dispatch(
+      updateModal({
+        title: "Payment Timeout",
+        text: "Your payment is still processing. Please check again later.",
+        active: true,
+        status: ModalStatus.FAILURE,
+      })
+    );
+  };
+
   const handleShortCodePayment = async (checkTicketOwner: boolean) => {
     if (
-      checkTicketOwner && //Prevent check when generating qr code
+      checkTicketOwner &&
       trip.creator &&
       user &&
-      trip.creator.toString() == user.$id
+      trip.creator.toString() === user.$id
     ) {
       dispatch(
         updateModal({
-          title: "Sorry you cannot purchase tickets to your own trip",
+          title: "Sorry, you cannot purchase tickets for your own trip.",
           active: true,
           status: ModalStatus.GRAY,
         })
@@ -237,9 +338,11 @@ const Payment = () => {
       setIsLoading(false);
       return;
     }
+
     try {
       setIsLoading(true);
-      if (barcode.trim().length != 0 && trip.price) {
+
+      if (barcode.trim().length !== 0 && trip.price) {
         const paymentResult = await payViaCode({
           username: "MAJESTY",
           password: "80241e69-c052-45ae-bbac-0e23eaf0990a",
@@ -250,21 +353,14 @@ const Payment = () => {
         console.log("🛒 Transaction Details:", paymentResult);
         setIsLoading(false);
         setBarcode("");
-        // if (paymentResult.payment_status == "PROCESSING") {
-        //   dispatch(
-        //     updateModal({
-        //       title: "Payment Processing",
-        //       text: "Please go approve payment in your bluecode app",
-        //       active: true,
-        //     })
-        //   );
-        //   setTimeout(() => {
-        //     dispatch(closeModal());
-        //   }, 5000);
-        // }
-        // if (paymentResult.payment_status == "APPROVED") {
-        //   await handleCreateTicket(PaymentType.PAY_NOW);
-        // }
+
+        //@ts-ignore
+        const merchantTxId = paymentResult?.status?.merchant_tx_id;
+        console.log("\n\nMerchant Transaction ID:", merchantTxId);
+
+        console.log("\n\n🚀 Starting status polling...");
+        //@ts-ignore
+        await pollPaymentStatus(merchantTxId);
       }
     } catch (err) {
       setIsLoading(false);
