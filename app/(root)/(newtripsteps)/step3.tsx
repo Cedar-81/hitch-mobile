@@ -16,7 +16,10 @@ import { COLORS } from "@/costants/colors";
 import { useRouter } from "expo-router";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "@/redux/store";
-import { setCurrentlyEditingTrip } from "@/redux/slices/createTripStepsSlice";
+import {
+  clearCurrentlyEditing,
+  setCurrentlyEditingTrip,
+} from "@/redux/slices/createTripStepsSlice";
 import { createTrip } from "@/lib/apiServices/tripsService";
 import { ModalStatus, updateModal } from "@/redux/slices/modalSlice";
 
@@ -68,7 +71,7 @@ const Step3 = () => {
           active: true,
         })
       );
-
+      dispatch(clearCurrentlyEditing());
       setIsLoading(false);
 
       // router.push(""); // Navigate to the trips page

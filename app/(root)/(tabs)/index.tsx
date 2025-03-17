@@ -6,8 +6,15 @@ import {
   Image,
   StyleSheet,
   ActivityIndicator,
+  RefreshControl,
 } from "react-native";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { LinearGradient } from "expo-linear-gradient";
 import TransportCard from "@/components/TransportCard";
 import Search from "@/components/Search";
@@ -21,6 +28,7 @@ import { updateUser } from "@/redux/slices/api/authSlice";
 
 const Rides = () => {
   const [trips, setTrips] = useState<Trip[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
 
   const { session, loading, user } = useSelector(
     (state: RootState) => state.auth
@@ -40,15 +48,22 @@ const Rides = () => {
     loadUser();
   }, []);
 
+  const loadTrips = async () => {
+    const data = await fetchTrips();
+    data && setTrips((data as unknown) as Trip[]);
+  };
+
   useEffect(() => {
-    const loadTrips = async () => {
-      const data = await fetchTrips();
-      data && setTrips((data as unknown) as Trip[]);
-    };
     loadTrips();
   }, []);
 
-  if (loading || !trips || (trips && trips.length == 0))
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true); // Start refreshing
+    await loadTrips(); // Refetch data
+    setRefreshing(false); // Stop refreshing
+  }, []);
+
+  if (loading || !trips)
     return (
       <SafeAreaView
         style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
@@ -64,11 +79,38 @@ const Rides = () => {
         paddingBottom: 120,
         backgroundColor: COLORS.white,
       }}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+      }
       renderItem={({ item }) => (
         <View style={{ paddingHorizontal: 16, marginBottom: 16 }}>
           <TransportCard trip={item} />
         </View>
       )}
+      ListEmptyComponent={
+        <View
+          style={{
+            flex: 1,
+            justifyContent: "center",
+            alignItems: "center",
+            marginTop: 10,
+            paddingHorizontal: 40,
+            paddingVertical: 40,
+          }}
+        >
+          <Text
+            style={{
+              fontFamily: "Rubik-Bold",
+              textAlign: "center",
+              fontSize: 18,
+              color: COLORS.primary90,
+            }}
+          >
+            Looks like there aren't any available trips yet. Why don't you
+            create one.
+          </Text>
+        </View>
+      }
       ListHeaderComponent={
         <View>
           <Image

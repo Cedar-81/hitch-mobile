@@ -36,3 +36,19 @@ export const formatTripTime = (
     duration,
   };
 };
+
+const generatedCodes = new Set<number>(); // Stores generated codes
+
+export const generateUniqueCode = (): number => {
+  let code;
+  do {
+    code = Math.floor(1000 + Math.random() * 9000); // Generate a 4-digit number
+  } while (generatedCodes.has(code)); // Ensure uniqueness
+
+  generatedCodes.add(code); // Store generated code
+  return code;
+};
+
+export const generateHash = (str1: string, str2: string): string => {
+  return Buffer.from(`${str1}-${str2}`).toString("base64");
+};

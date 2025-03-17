@@ -160,10 +160,12 @@ const TransportCard = ({ trip }: { trip: Trip }) => {
       <TouchableOpacity
         style={{
           paddingVertical: 8,
-          backgroundColor: COLORS.primary,
+          backgroundColor:
+            trip.users.$id == user?.$id ? COLORS.gray : COLORS.primary,
           marginTop: 20,
           borderRadius: 100,
         }}
+        disabled={trip.users.$id == user?.$id}
         onPress={() => {
           dispatch(
             updateTripState({

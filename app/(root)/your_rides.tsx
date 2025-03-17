@@ -6,8 +6,9 @@ import {
   FlatList,
   SafeAreaView,
   ActivityIndicator,
+  RefreshControl,
 } from "react-native";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { AntDesign } from "@expo/vector-icons";
 import { COLORS } from "@/costants/colors";
 import { useRouter } from "expo-router";
@@ -24,18 +25,25 @@ const YourBookings = () => {
   const [trips, setTrips] = useState<Trip[]>([]);
   const [loading, setLoading] = useState(true);
   const { user } = useSelector((state: RootState) => state.auth);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const getUserTrips = async () => {
+    if (!user) return; // Prevent running if no userId
+    setLoading(true);
+    const userTrips = await fetchTripsByUser(user.$id);
+    setTrips((userTrips as unknown) as Trip[]);
+    setLoading(false);
+  };
 
   useEffect(() => {
-    const getUserTrips = async () => {
-      if (!user) return; // Prevent running if no userId
-      setLoading(true);
-      const userTrips = await fetchTripsByUser(user.$id);
-      setTrips((userTrips as unknown) as Trip[]);
-      setLoading(false);
-    };
-
     getUserTrips();
   }, [user]);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true); // Start refreshing
+    await getUserTrips(); // Refetch data
+    setRefreshing(false); // Stop refreshing
+  }, []);
 
   if (loading)
     return (
@@ -55,6 +63,9 @@ const YourBookings = () => {
           <YourRidesTripCard trip={item} />
         </View>
       )}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+      }
       ListEmptyComponent={
         <View
           style={{

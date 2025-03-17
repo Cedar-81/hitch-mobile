@@ -45,6 +45,8 @@ export type NewTicket = {
   trip: string;
   payment_status: "ONHOLD" | "APPROVED";
   payment_type: "PAY_NOW" | "PAY_LATER";
+  code: number | null;
+  hash: string;
 };
 
 export enum PaymentType {
@@ -84,6 +86,7 @@ export type Ticket = {
   trip: Trip;
   payment_status: "ONHOLD" | "APPROVED";
   payment_type: "PAY_NOW" | "PAY_LATER";
+  code: number | null;
   $collectionId: string;
   $createdAt: string;
   $databaseId: string;

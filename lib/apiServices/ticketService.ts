@@ -1,6 +1,7 @@
 import { ID, Query } from "react-native-appwrite";
 import { DATABASE_ID, databases } from "../appwriteConfig";
 import { NewTicket, Ticket } from "../types";
+import { generateHash, generateUniqueCode } from "../helpers";
 
 const COLLECTION_ID = "hitch-tickets"; // Replace with your actual collection ID
 
@@ -31,11 +32,74 @@ export const fetchTicketsByUser = async (userId: string) => {
     console.log("\n\nuserid: ", userId);
     const response = await databases.listDocuments(DATABASE_ID, COLLECTION_ID);
     console.log("\nuserid_tickets", response);
+    response.documents.forEach((ticket) => {
+      console.log("\n\n users: ", ticket.users.$id, "\n");
+    });
     return response.documents.filter((tickets) => tickets.users.$id == userId);
     // return response.documents;
   } catch (error) {
     console.error("Error fetching tickets by user ID:", error);
     return [];
+  }
+};
+
+export const getTicketByHash = async (code: string, id: string) => {
+  const hash = generateHash(code, id);
+  try {
+    const response = await databases.listDocuments(DATABASE_ID, COLLECTION_ID);
+    const match = response.documents.find((ticket) => ticket.hash === hash);
+    if (!match) {
+      throw new Error("Invalid ticket code");
+    }
+  } catch (err) {
+    throw new Error("Couldnt retrieve tickets");
+  }
+};
+
+// export const getAndUpdateTicketCode = async (code: string) => {
+//   try {
+//     const response = await databases.listDocuments(DATABASE_ID, COLLECTION_ID);
+//     const match = response.documents.find(
+//       (ticket) => String(ticket.code) === code
+//     );
+//     if (!match) {
+//       throw new Error("Invalid ticket code");
+//     }
+
+//     try {
+//       await updateTicket(match.$id, { code: Number(code) });
+//     } catch {
+//       console.log("Couldnt update ticket code");
+//       return new Error("Couldnt update ticket code");
+//     }
+//   } catch (err) {
+//     console.log("Couldnt retrieve tickets");
+//     return Error("Couldnt retrieve tickets");
+//   }
+// };
+
+export const getAndUpdateTicketPayment = async (code: string) => {
+  try {
+    const response = await databases.listDocuments(DATABASE_ID, COLLECTION_ID);
+    const match = response.documents.find(
+      (ticket) => String(ticket.code) === code
+    );
+    if (!match) {
+      throw new Error("Invalid ticket code");
+    }
+
+    try {
+      await updateTicket(match.$id, {
+        payment_status: "APPROVED",
+        payment_type: "PAY_NOW",
+      });
+    } catch {
+      console.log("Couldnt update ticket payment staus");
+      return new Error("Couldnt update ticket payment staus");
+    }
+  } catch (err) {
+    console.log("Couldnt retrieve tickets for payment status");
+    return Error("Couldnt retrieve tickets");
   }
 };
 

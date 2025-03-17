@@ -35,14 +35,18 @@ const Step1 = () => {
   };
 
   const handleNext = () => {
-    dispatch(
-      updateModal({
-        title: "Missing Input",
-        text: "Please fill in all fields before proceeding.",
-        status: ModalStatus.GRAY,
-        active: true,
-      })
-    );
+    let isValid = isFormValid();
+    if (!isValid) {
+      dispatch(
+        updateModal({
+          title: "Missing Input",
+          text: "Please fill in all fields before proceeding.",
+          status: ModalStatus.GRAY,
+          active: true,
+          link: null,
+        })
+      );
+    }
 
     //@ts-ignore
     router.push(`/(root)/(newtripsteps)/step${currentStep + 1}`);

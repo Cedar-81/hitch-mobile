@@ -64,6 +64,20 @@ const createTripStepsSlice = createSlice({
         };
       }
     },
+    clearCurrentlyEditing: (state) => {
+      state.currentlyEditing = {
+        start_location_city: "",
+        car_type: "",
+        destination_location_city: "",
+        destination_location_state: "",
+        end_date_time: "",
+        passenger_count: 0,
+        price: 1000,
+        start_date_time: "",
+        start_location_state: "",
+        users: "",
+      };
+    },
   },
 });
 
@@ -72,6 +86,7 @@ export const {
   goToStep,
   updateLastRoute,
   setCurrentlyEditingTrip,
+  clearCurrentlyEditing,
 } = createTripStepsSlice.actions;
 
 export default createTripStepsSlice.reducer;

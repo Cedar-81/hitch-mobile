@@ -46,6 +46,7 @@ const Step2 = () => {
           text: "Please fill in all fields before proceeding.",
           status: ModalStatus.GRAY,
           active: true,
+          link: null,
         })
       );
       return;
