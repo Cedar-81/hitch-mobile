@@ -12,6 +12,9 @@ This MVP has been build by **Team MAJESTY** for the **Bluecode Hackathon**.
 
 ----------
 
+## PLEASE HEAD OVER TO THE LINK BELOW TO ACCESS FILES FOR THE INSTALLABLE APPLICATION
+ASSETS -> https://drive.google.com/drive/folders/1lP350m7ihWtx9xDyYv_Ff9IyLacdSuN9?usp=sharing
+
 ## **🚀 Features**
 
 ### **1️⃣ Ride Listing**
